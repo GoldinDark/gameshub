@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────────────────────
+// USER
+// ───────────────────────────────────────────
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  email     String    @unique
+  password  String
+  avatar    String?
+  role      Role      @default(USER)
+  balance   Float     @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  orders    Order[]
+  reviews   Review[]
+  library   Library[]
+  wishlist  Wishlist[]
+  cart      Cart[]
+}
+
+// ───────────────────────────────────────────
+// GAME
+// ───────────────────────────────────────────
+model Game {
+  id           Int      @id @default(autoincrement())
+  title        String
+  slug         String   @unique
+  description  String   @db.Text
+  price        Float
+  discount     Float    @default(0)
+  thumbnail    String?
+  trailer      String?
+  genre        Genre    @relation(fields: [genreId], references: [id])
+  genreId      Int
+  developer    String
+  publisher    String
+  releaseDate  DateTime
+  platform     String   @default("PC")
+  rating       Float    @default(0)
+  totalReviews Int      @default(0)
+  isFeatured   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  screenshots  Screenshot[]
+  orderItems   OrderItem[]
+  reviews      Review[]
+  library      Library[]
+  wishlist     Wishlist[]
+  cart         Cart[]
+  tags         GameTag[]
+}
+
+// ───────────────────────────────────────────
+// GENRE
+// ───────────────────────────────────────────
+model Genre {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  slug  String @unique
+  games Game[]
+}
+
+// ───────────────────────────────────────────
+// TAG (bisa RPG, Multiplayer, dll)
+// ───────────────────────────────────────────
+model Tag {
+  id    Int       @id @default(autoincrement())
+  name  String    @unique
+  games GameTag[]
+}
+
+model GameTag {
+  gameId Int
+  tagId  Int
+  game   Game @relation(fields: [gameId], references: [id])
+  tag    Tag  @relation(fields: [tagId], references: [id])
+
+  @@id([gameId, tagId])
+}
+
+// ───────────────────────────────────────────
+// SCREENSHOT
+// ───────────────────────────────────────────
+model Screenshot {
+  id     Int    @id @default(autoincrement())
+  gameId Int
+  url    String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────────────────────────
+// ORDER
+// ───────────────────────────────────────────
+model Order {
+  id        Int         @id @default(autoincrement())
+  userId    Int
+  total     Float
+  status    OrderStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+}
+
+model OrderItem {
+  id      Int   @id @default(autoincrement())
+  orderId Int
+  gameId  Int
+  price   Float
+
+  order Order @relation(fields: [orderId], references: [id])
+  game  Game  @relation(fields: [gameId], references: [id])
+}
+
+// ───────────────────────────────────────────
+// REVIEW
+// ───────────────────────────────────────────
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  gameId    Int
+  rating    Int      // 1-5
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@unique([userId, gameId])
+}
+
+// ───────────────────────────────────────────
+// LIBRARY (game yang sudah dibeli user)
+// ───────────────────────────────────────────
+model Library {
+  id      Int      @id @default(autoincrement())
+  userId  Int
+  gameId  Int
+  addedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@unique([userId, gameId])
+}
+
+// ───────────────────────────────────────────
+// WISHLIST
+// ───────────────────────────────────────────
+model Wishlist {
+  id      Int      @id @default(autoincrement())
+  userId  Int
+  gameId  Int
+  addedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@unique([userId, gameId])
+}
+
+// ───────────────────────────────────────────
+// CART
+// ───────────────────────────────────────────
+model Cart {
+  id     Int @id @default(autoincrement())
+  userId Int
+  gameId Int
+
+  user User @relation(fields: [userId], references: [id])
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@unique([userId, gameId])
+}
+
+// ───────────────────────────────────────────
+// ENUMS
+// ───────────────────────────────────────────
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}

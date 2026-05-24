@@ -1,0 +1,19 @@
+# ── Backend ───────────────────────────────
+backend/node_modules/
+backend/.env
+backend/uploads/thumbnails/
+backend/uploads/screenshots/
+backend/prisma/migrations/
+
+# ── Frontend ──────────────────────────────
+frontend/node_modules/
+frontend/dist/
+
+# ── OS ────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor ────────────────────────────────
+.vscode/settings.json
+*.log
