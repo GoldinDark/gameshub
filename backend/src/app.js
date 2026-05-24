@@ -16,6 +16,7 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:5173',
+    'https://gameshub-pi.vercel.app/',
     /\.vercel\.app$/,
   ],
   credentials: true,
