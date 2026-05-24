@@ -1,11 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  timeout: 15000,
 });
 
-// ── Auto attach token ──────────────────────────────────
 api.interceptors.request.use((config) => {
   const auth = localStorage.getItem('auth-storage');
   if (auth) {
@@ -17,7 +16,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ── Handle global error ────────────────────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {

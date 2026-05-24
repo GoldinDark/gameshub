@@ -14,7 +14,10 @@ const app = express();
 
 // ── Middleware Global ──────────────────────────────────
 app.use(cors({
-  origin: 'http://localhost:5173', // URL React (Vite)
+  origin: [
+    'http://localhost:5173',
+    /\.vercel\.app$/,
+  ],
   credentials: true,
 }));
 
