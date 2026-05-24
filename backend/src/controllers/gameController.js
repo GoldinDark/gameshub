@@ -1,9 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../utils/prisma');
 const { successResponse, errorResponse } = require('../utils/response');
 const fs   = require('fs');
 const path = require('path');
 
-const prisma = new PrismaClient();
+
 
 // ══════════════════════════════════════════════════════
 // GET ALL GAMES (dengan filter, search, sort, pagination)

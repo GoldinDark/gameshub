@@ -1,7 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../utils/prisma');
 const { successResponse, errorResponse } = require('../utils/response');
 
-const prisma = new PrismaClient();
+
 
 const createReview = async (req, res) => {
   try {
