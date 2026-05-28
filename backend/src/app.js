@@ -9,6 +9,7 @@ const orderRoutes  = require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const cartRoutes     = require('./routes/cartRoutes');     // tambah
 const wishlistRoutes = require('./routes/wishlistRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/payment', paymentRoutes);
 
 // ── Static folder untuk gambar upload ─────────────────
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

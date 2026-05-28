@@ -26,6 +26,7 @@ model User {
   library   Library[]
   wishlist  Wishlist[]
   cart      Cart[]
+  pendingPayments PendingPayment[]
 }
 
 // ───────────────────────────────────────────
@@ -196,4 +197,20 @@ enum OrderStatus {
   PENDING
   PAID
   CANCELLED
+}
+
+model PendingPayment {
+  id        String   @id @default(uuid())
+  userId    Int
+  amount    Float
+  status    PaymentStatus @default(PENDING)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  EXPIRED
 }
