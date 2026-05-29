@@ -200,13 +200,14 @@ enum OrderStatus {
 }
 
 model PendingPayment {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   userId    Int
   amount    Float
+  type      String        @default("TOPUP")
   status    PaymentStatus @default(PENDING)
   expiresAt DateTime
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id])
 }
 
 enum PaymentStatus {

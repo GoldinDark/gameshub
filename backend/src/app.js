@@ -25,7 +25,6 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/api/payment', paymentRoutes);
 
 // ── Static folder untuk gambar upload ─────────────────
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -38,6 +37,7 @@ app.use('/api/orders',  orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/cart',     cartRoutes);      // tambah
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // ── Health check ───────────────────────────────────────
 app.get('/', (req, res) => {
