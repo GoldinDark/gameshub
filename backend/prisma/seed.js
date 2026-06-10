@@ -10,6 +10,10 @@ const steam = (appId) =>
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Tambahkan helper ini di atas fungsi main()
+const steamShot = (appId, variant = 'capsule_616x353') =>
+  `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/${variant}.jpg`;
+
 async function main() {
 
   // ── GENRE (sequential, bukan Promise.all) ─────────────
@@ -62,37 +66,64 @@ async function main() {
   const makeSlug = (title) =>
     title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
 
-  const upsertGame = async (data, tagList = []) => {
-    const slug = makeSlug(data.title);
-    const existing = await prisma.game.findUnique({ where: { slug } });
+  const upsertGame = async (data, tagList = [], screenshotUrls = []) => {
+  const slug = makeSlug(data.title);
+  const existing = await prisma.game.findUnique({ where: { slug } });
 
-    if (existing) {
-      await prisma.game.update({
-        where: { slug },
-        data: {
-          thumbnail:   data.thumbnail,
-          description: data.description,
-          price:       data.price,
-          discount:    data.discount,
-          rating:      data.rating,
-          isFeatured:  data.isFeatured,
-        },
-      });
-      console.log(`🔄 Updated: ${data.title}`);
-      return;
-    }
+  if (existing) {
+    // Hapus screenshot lama
+    await prisma.screenshot.deleteMany({ where: { gameId: existing.id } });
 
-    await prisma.game.create({
+    // Update data game
+    await prisma.game.update({
+      where: { slug },
       data: {
-        ...data,
-        slug,
-        tags: {
-          create: tagList.map((name) => ({ tag: { connect: { name } } })),
-        },
+        thumbnail:   data.thumbnail,
+        description: data.description,
+        price:       data.price,
+        discount:    data.discount,
+        rating:      data.rating,
+        isFeatured:  data.isFeatured,
       },
     });
-    console.log(`🎮 Created: ${data.title}`);
-  };
+
+    // Buat screenshot baru
+    if (screenshotUrls.length > 0) {
+      for (const url of screenshotUrls) {
+        await prisma.screenshot.create({
+          data: { url, gameId: existing.id },
+        });
+        await delay(50);
+      }
+    }
+
+    console.log(`🔄 Updated: ${data.title} (${screenshotUrls.length} screenshots)`);
+    return;
+  }
+
+  // Buat game baru
+  const created = await prisma.game.create({
+    data: {
+      ...data,
+      slug,
+      tags: {
+        create: tagList.map((name) => ({ tag: { connect: { name } } })),
+      },
+    },
+  });
+
+  // Buat screenshots
+  if (screenshotUrls.length > 0) {
+    for (const url of screenshotUrls) {
+      await prisma.screenshot.create({
+        data: { url, gameId: created.id },
+      });
+      await delay(50);
+    }
+  }
+
+  console.log(`🎮 Created: ${data.title} (${screenshotUrls.length} screenshots)`);
+};
 
   // ── GAMES DATA ─────────────────────────────────────────
   const games = [
@@ -300,7 +331,7 @@ async function main() {
         releaseDate: new Date('2022-11-18'),
         platform: 'PC, PS4, PS5',
         rating: 4.8, totalReviews: 0, isFeatured: false,
-        thumbnail: 'https://image.api.playstation.com/vulcan/ap/rnd/202207/1210/4xJ8XB3bi888QTLZYdl7Oi0s.png',
+        thumbnail: steam(1817070),
       },
       tags: ['Singleplayer', 'Open World', 'Third Person', 'Story Rich', 'Controller Support'],
     },
@@ -534,7 +565,7 @@ async function main() {
         releaseDate: new Date('2011-11-18'),
         platform: 'PC, PS4, PS5, Xbox, Switch, Mobile',
         rating: 4.8, totalReviews: 0, isFeatured: false,
-        thumbnail: steam(2448590),
+        thumbnail: steam(1672970),
       },
       tags: ['Singleplayer', 'Multiplayer', 'Sandbox', 'Crafting', 'Online', 'Co-op'],
     },
@@ -574,7 +605,7 @@ async function main() {
         releaseDate: new Date('2015-03-24'),
         platform: 'PS4, PS5',
         rating: 4.9, totalReviews: 0, isFeatured: false,
-        thumbnail: 'https://image.api.playstation.com/cdn/EP9000/CUSA00207_00/bkyzHRFLbHpBPCCHxIJtNKmwUFnLkjqg.png',
+        thumbnail: 'https://image.api.playstation.com/vulcan/ap/rnd/202010/2618/mjnPnMmFBQCOdUrLFwFjoHtk.png',
       },
       tags: ['Singleplayer', 'Souls-like', 'Dark', 'Horror', 'Atmospheric'],
     },
@@ -710,9 +741,119 @@ async function main() {
     },
   ];
 
-  // ── Jalankan sequential dengan delay ──────────────────
+  // ══════════════════════════════════════════════════════
+  // SCREENSHOTS — semua game pakai Steam CDN (tanpa hash)
+  // capsule_616x353 = header art lebar
+  // library_hero    = banner sangat lebar
+  // ══════════════════════════════════════════════════════
+
+  const sc = (appId) => [
+    `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/capsule_616x353.jpg`,
+    `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_hero.jpg`,
+  ];
+
+  const screenshots = {
+    // ── HORROR ──────────────────────────────────────────
+    'Resident Evil 4 Remake':  sc(2050650),
+    'Resident Evil Village':   sc(1196590),
+    'Alan Wake 2':             sc(1903840),
+    'Returnal':                sc(1649240),
+    'Alan Wake':               sc(108710),
+
+    // ── ACTION ──────────────────────────────────────────
+    'God of War Ragnarök':     sc(2322010),
+    'Devil May Cry 5':         sc(601150),
+    'Sekiro: Shadows Die Twice': sc(814380),
+    'Batman: Arkham Knight':   sc(208650),
+    'Monster Hunter: World':   sc(582010),
+    'Metal Gear Solid V':      sc(287700),
+    'Nioh 2':                  sc(1325200),
+    'Armored Core VI':         sc(1888160),
+    'Like a Dragon: Ishin':    sc(1842520),
+
+    // ── RPG ─────────────────────────────────────────────
+    'Persona 5 Royal':         sc(1687950),
+    'Elden Ring':              sc(1245620),
+    'Cyberpunk 2077':          sc(1091500),
+    'The Witcher 3: Wild Hunt': sc(292030),
+    'Final Fantasy XVI':       sc(1839144),
+    'Dark Souls III':          sc(374320),
+    'Baldur\'s Gate 3':        sc(1086940),
+    'Sea of Stars':            sc(1244090),
+    'Lies of P':               sc(1627720),
+    'Persona 3 Reload':        sc(2161700),
+
+    // ── ADVENTURE ───────────────────────────────────────
+    'The Last of Us Part I':   sc(1888930),
+    'Spider-Man: Miles Morales': sc(1817070),
+    'Hogwarts Legacy':         sc(990080),
+    'It Takes Two':            sc(1426210),
+    'Ghost of Tsushima':       sc(2215430),
+
+    // ── OPEN WORLD ──────────────────────────────────────
+    'Red Dead Redemption 2':   sc(1174180),
+    'Grand Theft Auto V':      sc(271590),
+    "Assassin's Creed Odyssey": sc(812140),
+    'Forza Horizon 5':         sc(1551360),
+
+    // ── SHOOTER ─────────────────────────────────────────
+    'Counter-Strike 2':        sc(730),
+    'Apex Legends':            sc(1172470),
+    'Deep Rock Galactic':      sc(548430),
+
+    // ── FIGHTING ────────────────────────────────────────
+    'Mortal Kombat 1':         sc(1971870),
+    'Street Fighter 6':        sc(1794680),
+    'Tekken 8':                sc(1778820),
+
+    // ── INDIE ───────────────────────────────────────────
+    'Hades':                   sc(1145360),
+    'Hollow Knight':           sc(367520),
+    'Stardew Valley':          sc(413150),
+    'Celeste':                 sc(504230),
+    'Dave the Diver':          sc(1868140),
+    'Cuphead':                 sc(268910),
+
+    // ── STRATEGY & SIMULATION ───────────────────────────
+    'Civilization VI':         sc(289070),
+    'The Sims 4':              sc(1222670),
+    'Minecraft':               sc(1672970),
+
+    // ── SPORTS ──────────────────────────────────────────
+    'EA Sports FC 25':         sc(2235270),
+
+    // ── PS EXCLUSIVE (pakai URL alternatif) ─────────────
+    'Bloodborne': [
+      'https://image.api.playstation.com/vulcan/ap/rnd/202010/2618/mjnPnMmFBQCOdUrLFwFjoHtk.png',
+      'https://image.api.playstation.com/cdn/EP9000/CUSA00207_00/bkyzHRFLbHpBPCCHxIJtNKmwUFnLkjqg.png',
+    ],
+  };
+
+  // ── Fix thumbnail yang bermasalah ────────────────────
+  const thumbnailFix = {
+    'Alan Wake 2':
+      'https://cdn.cloudflare.steamstatic.com/steam/apps/1903840/header.jpg',
+    'Like a Dragon: Ishin':
+      'https://cdn.cloudflare.steamstatic.com/steam/apps/1842520/header.jpg',
+    'Minecraft':
+      'https://cdn.cloudflare.steamstatic.com/steam/apps/1672970/header.jpg',
+    'Spider-Man: Miles Morales':
+      'https://cdn.cloudflare.steamstatic.com/steam/apps/1817070/header.jpg',
+    'Bloodborne':
+      'https://image.api.playstation.com/vulcan/ap/rnd/202010/2618/mjnPnMmFBQCOdUrLFwFjoHtk.png',
+    'Ghost of Tsushima':
+      'https://cdn.cloudflare.steamstatic.com/steam/apps/2215430/header.jpg',
+  };
+
+  // ── Loop dengan screenshots + thumbnail fix ──────────
   for (const { data, tags } of games) {
-    await upsertGame(data, tags);
+    // Terapkan fix thumbnail kalau ada
+    if (thumbnailFix[data.title]) {
+      data.thumbnail = thumbnailFix[data.title];
+    }
+
+    const shots = screenshots[data.title] || [];
+    await upsertGame(data, tags, shots);
     await delay(200);
   }
 
@@ -721,6 +862,4 @@ async function main() {
 
 main()
   .catch((e) => { console.error(e); process.exit(1); })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(async () => { await prisma.$disconnect(); });

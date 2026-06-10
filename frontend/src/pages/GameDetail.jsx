@@ -153,39 +153,47 @@ export default function GameDetail() {
           </div>
 
           {/* Thumbnail strip */}
-          {game.screenshots?.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {game.thumbnail && (
-                <button
-                  onClick={() => setActiveImg(game.thumbnail)}
-                  className="flex-shrink-0 w-24 h-16 rounded-lg overflow-hidden transition-all"
-                  style={{
-                    border: activeImg === game.thumbnail
-                      ? '2px solid #38bdf8'
-                      : '2px solid rgba(26,39,68,0.8)',
-                  }}
-                >
-                  <img src={getImageSrc(game.thumbnail)} alt="thumb"
-                    className="w-full h-full object-cover" />
-                </button>
-              )}
-              {game.screenshots.map((ss) => (
-                <button
-                  key={ss.id}
-                  onClick={() => setActiveImg(ss.url)}
-                  className="flex-shrink-0 w-24 h-16 rounded-lg overflow-hidden transition-all"
-                  style={{
-                    border: activeImg === ss.url
-                      ? '2px solid #38bdf8'
-                      : '2px solid rgba(26,39,68,0.8)',
-                  }}
-                >
-                  <img src={getImageSrc(ss.url)} alt="screenshot"
-                    className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
+{(game.screenshots?.length > 0 || game.thumbnail) && (
+  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-3">
+    {/* Main thumbnail */}
+    {game.thumbnail && (
+      <button
+        onClick={() => setActiveImg(game.thumbnail)}
+        className="flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden"
+        style={{
+          border: activeImg === game.thumbnail
+            ? '2px solid #38bdf8' : '2px solid rgba(26,39,68,0.8)',
+        }}
+      >
+        <img
+          src={getImageSrc(game.thumbnail)}
+          alt="main"
+          className="w-full h-full object-cover"
+          onError={(e) => { e.target.onerror = null; e.target.style.display='none'; }}
+        />
+      </button>
+    )}
+    {/* Screenshots */}
+    {game.screenshots?.map((ss) => (
+      <button
+        key={ss.id}
+        onClick={() => setActiveImg(ss.url)}
+        className="flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden"
+        style={{
+          border: activeImg === ss.url
+            ? '2px solid #38bdf8' : '2px solid rgba(26,39,68,0.8)',
+        }}
+      >
+        <img
+          src={getImageSrc(ss.url)}
+          alt="screenshot"
+          className="w-full h-full object-cover"
+          onError={(e) => { e.target.onerror = null; e.target.style.display='none'; }}
+        />
+      </button>
+    ))}
+  </div>
+)}
         </div>
 
         {/* Kanan: Info & Buy Card */}

@@ -30,10 +30,14 @@ export default function GameCard({ game }) {
       <div className="relative aspect-[16/9] overflow-hidden bg-border">
         {game.thumbnail ? (
           <img
-            src={getImageSrc(game.thumbnail)}
-            alt={game.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+  src={getImageSrc(game.thumbnail)}
+  alt={game.title}
+  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+  onError={(e) => {
+    e.target.onerror = null;
+    e.target.src = `https://placehold.co/460x215/0a1628/38bdf8?text=${encodeURIComponent(game.title)}`;
+  }}
+/>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-card">
             <span className="text-muted text-4xl">🎮</span>
